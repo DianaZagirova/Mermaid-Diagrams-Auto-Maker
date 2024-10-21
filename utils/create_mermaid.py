@@ -9,8 +9,9 @@ from streamlit_js_eval import streamlit_js_eval
 from langchain_community.chat_models import AzureChatOpenAI
 import os
 from langchain.schema import HumanMessage, SystemMessage, AIMessage
-from llm.llm_utils import init_llm
+from llm.llm_utils import init_llm, init_llm_model_specific
 import streamlit.components.v1 as components
+import os
 
 def convert_to_single_line(output):
     lines = output.strip().split('\n')
@@ -29,23 +30,28 @@ def mermaid(code: str) -> None:
             mermaid.initialize({{ startOnLoad: true }});
         </script>
         """,
-        height=600,
+        height=800,
     )
 
-    # html(
-    #     f"""
-    #     <pre class="mermaid">
-    #         {code}
-    #     </pre>
+def save_mermaid_as_html(code: str, filename: str = "mermaid_diagram.html") -> None:
+    html_content = f"""
+    <html>
+    <head>
+        <script type="module">
+            import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+            mermaid.initialize({{ startOnLoad: true }});
+        </script>
+    </head>
+    <body>
+        <pre class="mermaid">
+            {code}
+        </pre>
+    </body>
+    </html>
+    """
+    return html_content
 
-    #     <script type="module">
-    #         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-    #         mermaid.initialize({{ startOnLoad: true, theme: "forest", themeVariables: {{ fontSize: "14px", padding: "10px" }} }});
-        
-    #     </script>
-    #     """,
-    #     height=st.session_state["svg_height"] + 50,
-    # )
+    
 def js_btoa(data):
     return base64.b64encode(data)
 
@@ -64,70 +70,24 @@ def genPakoLink(graphMarkdown: str):
     return link
 
 
-def mermaid_chart(mindmap_code):
-    # html_code = f"""
-    # <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
-    # <div class="mermaid">{mindmap_code}</div>
-    # <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-    # <script>
-    #     mermaid.initialize({{
-    #         startOnLoad: true,            
-    #         fontFamily: "arial",
-    #         themeVariables: {{
-    #             fontSize: "30px",  
-    #             primaryColor: "#96ab91",
-    #             padding: "15px"   
-    #         }}
-    #     }});
-    # </script>
-    # """
-    
-    html_code = f'''
-    <div class="mermaid">
-    {mindmap_code}
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-    <script>
-        mermaid.initialize({{ startOnLoad: true }});
-    </script>
-    '''
-    components.html(html_code, height=600)
+def get_prompt(graph_type):
+    graph_type_to_prompt = {"**Graphical abstract** 📚": "system_prompt_for_mermaid_graphical_abstract",
+                                "**Flowchart**" :"system_prompt_for_mermaid_flowchart", 
+                                "**Sequence Diagram**":"system_prompt_for_mermaid_sequence_diagram", 
+                                "**State Diagram**":"system_prompt_for_mermaid_state_diagram",
+                                "**Timeline Diagram**":"system_prompt_for_mermaid_timeline_diagram", 
+                                "**Pie Chart**":"system_prompt_for_mermaid_flowchart_pie_chart"}
+    selected_prompt = graph_type_to_prompt.get(graph_type)
+    llm_prompts = json.load(open("./prompts/llm_prompts.json"))  
+    return llm_prompts.get(selected_prompt)
 
-    return html_code
-
-def render_mermaid_chart(context):
-    mermaid_code, mermaid_link, text_to_download = get_mermaid_data(context)
-    st.code(mermaid_code)    
-    # html(mermaid_chart(mermaid_code), width=1005, height=900)
-    # mermaid_chart(mermaid_code)
-    mermaid(mermaid_code)
-    st.download_button(
-            label="Download mermaid file",
-            data=text_to_download.getvalue(),
-            file_name="mermaid_diagram.txt",
-            mime="text/plain"
-        )
-    
-    link='The link for flowchart rendering on  [mermaid_live]({mermaid_live})'.format(mermaid_live=mermaid_link)
-    st.markdown(link, unsafe_allow_html=True)
-
-
-def get_mermaid_data(context):
-        llm = init_llm()  
-        llm_prompts = json.load(open("./prompts/llm_prompts.json"))           
-        # msg = [
-        #     SystemMessage(content=system_prompt),
-        #     HumanMessage(content=user_prompt),
-        #     AIMessage(content=assistant_prompt),
-        #     HumanMessage(content = context)
-        # ]    
+def get_mermaid_data(context, prompt, diagram_model, main_temperature):            
+        llm = init_llm_model_specific(diagram_model)
         msg = [          
-             SystemMessage(content=llm_prompts['system_prompt_for_mermaid']),
+            SystemMessage(content=prompt),
             HumanMessage(content = context)
         ]      
-        res = llm(messages=msg)
-        # mermaid_code = res.content.strip('```').strip('\n```').strip('```\n').strip('```\n\n').strip('\n\n```')
-        
+        res = llm(messages=msg, temperature = main_temperature)        
         mermaid_code = res.content.strip('```').strip('\n```').strip('```\n').strip('```\n\n').strip('\n\n```').splitlines()[0:-1]
         mermaid_code = '\n'.join(mermaid_code)
         text_to_download = StringIO(mermaid_code) 
