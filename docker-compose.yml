@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  mermaid_dianaz:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8510:8510"
+    volumes:
+      - .:/app
+    networks:
+      - dianaz_shared_network
+    container_name: mermaid_dianaz
+    environment:
+      - GIT_PYTHON_REFRESH=quiet
+
+networks:
+  dianaz_shared_network:
+    driver: bridge

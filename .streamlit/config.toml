@@ -1,0 +1,11 @@
+[theme]
+backgroundColor="#ffffff"
+secondaryBackgroundColor="#f0f0f0"
+primaryColor="#1a73e8"
+font = "sans serif"
+textColor="#333333"
+fontSize = "16px"
+borderColor="#e0e0e0"
+
+[server]
+fileWatcherType = "poll"
