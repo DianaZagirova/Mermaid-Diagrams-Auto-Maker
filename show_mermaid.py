@@ -3,10 +3,20 @@
 import streamlit as st
 st.set_page_config(page_title="Mermaid", page_icon=":page_facing_up:", layout="wide")
 import json
-from utils.create_mermaid import get_mermaid_data, mermaid, get_prompt, save_mermaid_as_html
-from llm.llm_utils import get_llm_response_model_specific
+from utils.create_mermaid import get_mermaid_data, mermaid, get_prompt, save_mermaid_as_html, render_mermaid
+from llm.llm_utils import get_llm_response_model_specific, init_llm_model_specific
 from formatting.custom_styles import apply_custom_style
+from formatting.chat_interface import handle_userInput 
 from utils.initiate_states import init_states 
+from utils.general_utils import configure_assistant_prompt
+from pydantic import BaseModel, Field, Extra
+from typing import Dict, List, Type, Optional, Any
+from langchain.schema import SystemMessage
+from langchain.callbacks import get_openai_callback
+from langchain_community.chat_message_histories import StreamlitChatMessageHistory
+from langchain_community.tools import DuckDuckGoSearchRun
+from agent.agent import Agent
+
 
 apply_custom_style()
 init_states()
@@ -94,7 +104,8 @@ st.divider()
 
 if st.button('Generate Mermaid!') and st.session_state.settings_current != st.session_state.settings_previous:
     if not st.session_state.text_input:
-        st.stop('Text input is empty. Please provide text for a diagram')
+        st.stop()
+        st.write('Text input is empty. Please provide text for a diagram')
     
     if make_summary:        
         st.session_state.mermaid_input = get_llm_response_model_specific(diagram_model, st.session_state.selected_prompt_for_summarization, st.session_state.text_input, summarization_temperature)
@@ -105,28 +116,44 @@ if st.button('Generate Mermaid!') and st.session_state.settings_current != st.se
     st.session_state.settings_previous = st.session_state.settings_current       
     st.session_state.mermaid_code, st.session_state.mermaid_link, st.session_state.text_to_download = get_mermaid_data(st.session_state.mermaid_input, st.session_state.selected_prompt_for_diagram_creation, diagram_model, main_temperature)
 
+msgs = StreamlitChatMessageHistory(key="special_app_key")
+user_question = []
+col_diagram, col_chat = st.columns([1,1])
+with col_diagram:
+    render_mermaid()
 
-if st.session_state.mermaid_code:
-    link='**The link for flowchart rendering on**  [mermaid_live]({mermaid_live})'.format(mermaid_live=st.session_state.mermaid_link)
-    st.markdown(link, unsafe_allow_html=True)     
-    mermaid(st.session_state.mermaid_code)
+with col_chat:
+    st.session_state.question_current = st.text_area(label="**MOCK - Chat on diagram**", height = 130, placeholder="Fix the diagram to add a new block - 'Current treatment options'")
+    tools = [DuckDuckGoSearchRun()]  
+    assistant_prompt = configure_assistant_prompt() 
+    agent_assistant = Agent(tools, 
+        model_selected = "gpt-4o",
+        modified_system_message = assistant_prompt,
+        history= msgs,
+        llm = init_llm_model_specific("gpt-4o"),
+        streamlit_usage = True)
+    
+    callbacks = True    
+    col_run, col_clear , colf1, colf2, colf3 = st.columns([2,2, 1, 1, 1])
+    with col_run: 
+        run_chat = st.button('Run chat')
+    with col_clear: 
+        clear_chat = st.button('Clear chat')
+    if clear_chat:
+        st.session_state.question_previous = ""
+        st.session_state.question_current = ""
+        st.session_state.chat_history = []
 
-    with st.expander('Mermaid code'):
-        st.code(st.session_state.mermaid_code)  
-
-    with st.expander('Text for a diagram creation'):
-        st.write(st.session_state.mermaid_input) 
-
-    st.download_button(
-            label="Download mermaid file",
-            data=st.session_state.text_to_download.getvalue(),
-            file_name="mermaid_diagram.txt",
-            mime="text/plain"
-        )    
-
-    st.download_button(
-            label="Save Mermaid as HTML",
-            data=save_mermaid_as_html(st.session_state.mermaid_code),
-            file_name="mermaid_diagram.html"
-        )  
-
+    if st.session_state.question_current and run_chat:        
+        if callbacks:
+            # st_cb = StreamlitCallbackHandler(st.container(), expand_new_thoughts=True)
+            with get_openai_callback() as cb:       
+                result = agent_assistant.agent.run(st.session_state.question_current) 
+        else:
+            result = agent_assistant.agent.run(st.session_state.question_current)               
+        st.session_state.question_previous = st.session_state.question_current 
+        st.session_state.chat_history.append(result)
+        st.session_state.chat_history.append(st.session_state.question_current)
+        handle_userInput(st.session_state.chat_history)
+    else:
+        handle_userInput(st.session_state.chat_history)

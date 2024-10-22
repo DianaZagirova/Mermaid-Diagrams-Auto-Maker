@@ -21,9 +21,21 @@ def init_states():
     if "mermaid_code" not in st.session_state:
         st.session_state.mermaid_code = ""
 
+    if "mermaid_code_corrected" not in st.session_state:
+        st.session_state.mermaid_code_corrected = ""
+
     if "mermaid_link" not in st.session_state:
         st.session_state.mermaid_link = ""
 
     if "text_to_download" not in st.session_state:
         st.session_state.text_to_download = ""
+
+    if "question_current" not in st.session_state:
+            st.session_state.question_current = ''
+            
+    if "question_previous" not in st.session_state:
+            st.session_state.question_previous = ''
+
+    if "chat_history" not in st.session_state:
+            st.session_state.chat_history = []
 

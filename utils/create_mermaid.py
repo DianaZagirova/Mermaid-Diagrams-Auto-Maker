@@ -4,11 +4,9 @@ import json
 import zlib
 import streamlit as st
 from io import StringIO
-from streamlit.components.v1 import html
 from streamlit_js_eval import streamlit_js_eval
-from langchain_community.chat_models import AzureChatOpenAI
 import os
-from langchain.schema import HumanMessage, SystemMessage, AIMessage
+from langchain.schema import HumanMessage, SystemMessage
 from llm.llm_utils import init_llm, init_llm_model_specific
 import streamlit.components.v1 as components
 import os
@@ -95,4 +93,38 @@ def get_mermaid_data(context, prompt, diagram_model, main_temperature):
         return mermaid_code, mermaid_link, text_to_download 
             
 
+def render_mermaid():
+    if not st.session_state.mermaid_code:
+        st.write('There has been no diagram created yet')
+    else:
+        st.write('**Mermaid data**')
 
+        with st.expander('Mermaid code'):
+            st.session_state.mermaid_code_corrected = st.text_area("", height = 200, value = st.session_state.mermaid_code)  
+
+        with st.expander('Text for a diagram creation'):
+            st.write(st.session_state.mermaid_input) 
+        
+        if st.session_state.mermaid_code_corrected != st.session_state.mermaid_code:
+            st.session_state.text_to_download = StringIO(st.session_state.mermaid_code_corrected) 
+            st.session_state.mermaid_link = genPakoLink(st.session_state.mermaid_code_corrected)
+            st.session_state.mermaid_code = st.session_state.mermaid_code_corrected       
+        
+
+        col_download_code, col_download_html, colf1, colf2, colf3 = st.columns([2,2, 1, 1, 1])
+        with col_download_code:
+            st.download_button(
+                label="Save Mermaid as TXT",
+                data=st.session_state.text_to_download.getvalue(),
+                file_name="mermaid_diagram.txt",
+                mime="text/plain"
+            )    
+        with col_download_html:
+            st.download_button(
+                label="Save Mermaid as HTML",
+                data=save_mermaid_as_html(st.session_state.mermaid_code),
+                file_name="mermaid_diagram.html"
+            )  
+        link='**The link for flowchart rendering on**  [mermaid_live]({mermaid_live})'.format(mermaid_live=st.session_state.mermaid_link)
+        st.markdown(link, unsafe_allow_html=True) 
+        mermaid(st.session_state.mermaid_code)

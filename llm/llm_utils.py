@@ -20,7 +20,7 @@ def init_llm():
 
     return llm
 
-def init_llm_model_specific(model):
+def init_llm_model_specific(model, streaming = False):
     if model=="gpt-4o":
         llm = AzureChatOpenAI(
             azure_endpoint="https://dora-dev.openai.azure.com/",
@@ -28,9 +28,10 @@ def init_llm_model_specific(model):
             openai_api_key=azure_key_4o,
             openai_api_type="azure",
             model="gpt-4o",
+            streaming = streaming,
             temperature=0.2        )
     elif model == "gpt-4o-mini":
-        llm = ChatOpenAI(openai_api_key = openai_key, temperature=0.2 )
+        llm = ChatOpenAI(openai_api_key = openai_key, streaming = streaming, temperature=0.2 )
     else:
         raise ValueError(f"Unsupported model: {model}. Please use 'gpt-4o' or 'gpt-4o-mini'.")    
     return llm
