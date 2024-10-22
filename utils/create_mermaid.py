@@ -99,7 +99,7 @@ def render_mermaid():
     else:
         st.write('**Mermaid data**')
 
-        with st.expander('Mermaid code'):
+        with st.expander('Mermaid code - you may edit it here after the chat with the Agent'):
             st.session_state.mermaid_code_corrected = st.text_area("", height = 200, value = st.session_state.mermaid_code)  
 
         with st.expander('Text for a diagram creation'):

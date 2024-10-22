@@ -123,7 +123,7 @@ with col_diagram:
     render_mermaid()
 
 with col_chat:
-    st.session_state.question_current = st.text_area(label="**MOCK - Chat on diagram**", height = 130, placeholder="Fix the diagram to add a new block - 'Current treatment options'")
+    st.session_state.question_current = st.text_area(label="**Chat on a diagram (Agent already knows about your data/code)**", height = 130, placeholder="Fix the diagram to add a new block - 'Current treatment options'")
     tools = [DuckDuckGoSearchRun()]  
     assistant_prompt = configure_assistant_prompt() 
     agent_assistant = Agent(tools, 
