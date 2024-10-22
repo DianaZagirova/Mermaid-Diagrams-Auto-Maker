@@ -113,12 +113,14 @@ if st.button('Generate Mermaid!') and st.session_state.settings_current != st.se
             st.write(st.session_state.mermaid_input)      
     else:
         st.session_state.mermaid_input = st.session_state.text_input
-    st.session_state.settings_previous = st.session_state.settings_current       
+    st.session_state.settings_previous = st.session_state.settings_current 
+    st.session_state.mermaid_code_chat_based, st.session_state.mermaid_link_chat_based, st.session_state.text_to_download_chat_based = "", "", "" 
+          
     st.session_state.mermaid_code, st.session_state.mermaid_link, st.session_state.text_to_download = get_mermaid_data(st.session_state.mermaid_input, st.session_state.selected_prompt_for_diagram_creation, diagram_model, main_temperature)
 
 msgs = StreamlitChatMessageHistory(key="special_app_key")
 user_question = []
-col_diagram, col_chat = st.columns([1,1])
+col_chat , col_diagram  = st.columns([1,1])
 with col_diagram:
     render_mermaid()
 
@@ -145,14 +147,12 @@ with col_chat:
         st.session_state.chat_history = []
 
     if st.session_state.question_current and run_chat:        
-        if callbacks:
-            # st_cb = StreamlitCallbackHandler(st.container(), expand_new_thoughts=True)
-            with get_openai_callback() as cb:       
-                result = agent_assistant.agent.run(st.session_state.question_current) 
-        else:
-            result = agent_assistant.agent.run(st.session_state.question_current)               
+        with get_openai_callback() as cb: 
+
+                st.session_state.mermaid_code_chat_based, st.session_state.mermaid_link_chat_based, st.session_state.text_to_download_chat_based = get_mermaid_data(st.session_state.question_current, assistant_prompt, "gpt-4o", 0.2)
+
         st.session_state.question_previous = st.session_state.question_current 
-        st.session_state.chat_history.append(result)
+        st.session_state.chat_history.append(st.session_state.mermaid_code_chat_based)
         st.session_state.chat_history.append(st.session_state.question_current)
         handle_userInput(st.session_state.chat_history)
     else:

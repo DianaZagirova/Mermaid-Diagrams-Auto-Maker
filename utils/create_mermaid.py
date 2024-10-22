@@ -99,23 +99,32 @@ def render_mermaid():
     else:
         st.write('**Mermaid data**')
 
-        with st.expander('Mermaid code - you may edit it here after the chat with the Agent'):
-            st.session_state.mermaid_code_corrected = st.text_area("", height = 200, value = st.session_state.mermaid_code)  
+        if st.session_state.mermaid_code_chat_based:
+            data_to_visualize = {"code":st.session_state.mermaid_code_chat_based, "link":st.session_state.mermaid_link_chat_based, "text":st.session_state.text_to_download_chat_based, "type" : "chat_based"}
+        else:
+            data_to_visualize = {"code":st.session_state.mermaid_code, "link":st.session_state.mermaid_link, "text":st.session_state.text_to_download, "type" : "initial"}
+        
+        with st.expander('Mermaid code'):
+            st.code(data_to_visualize.get('code'))              
 
         with st.expander('Text for a diagram creation'):
             st.write(st.session_state.mermaid_input) 
         
-        if st.session_state.mermaid_code_corrected != st.session_state.mermaid_code:
-            st.session_state.text_to_download = StringIO(st.session_state.mermaid_code_corrected) 
-            st.session_state.mermaid_link = genPakoLink(st.session_state.mermaid_code_corrected)
-            st.session_state.mermaid_code = st.session_state.mermaid_code_corrected       
+        # if st.session_state.mermaid_code_corrected != st.session_state.mermaid_code:
+        #     st.session_state.text_to_download = StringIO(st.session_state.mermaid_code_corrected) 
+        #     st.session_state.mermaid_link = genPakoLink(st.session_state.mermaid_code_corrected)
+        #     st.session_state.mermaid_code = st.session_state.mermaid_code_corrected       
         
 
-        col_download_code, col_download_html, colf1, colf2, colf3 = st.columns([2,2, 1, 1, 1])
+        col_update, col_download_code, col_download_html = st.columns([2, 2, 2])
+        with col_update:
+            rerender = st.button("Update chart")
+            if rerender:
+                st.rerun()
         with col_download_code:
             st.download_button(
                 label="Save Mermaid as TXT",
-                data=st.session_state.text_to_download.getvalue(),
+                data=data_to_visualize.get('text').getvalue(),
                 file_name="mermaid_diagram.txt",
                 mime="text/plain"
             )    
@@ -125,6 +134,6 @@ def render_mermaid():
                 data=save_mermaid_as_html(st.session_state.mermaid_code),
                 file_name="mermaid_diagram.html"
             )  
-        link='**The link for flowchart rendering on**  [mermaid_live]({mermaid_live})'.format(mermaid_live=st.session_state.mermaid_link)
+        link='**The link for flowchart rendering on**  [mermaid_live]({mermaid_live})'.format(mermaid_live=data_to_visualize.get('link'))
         st.markdown(link, unsafe_allow_html=True) 
-        mermaid(st.session_state.mermaid_code)
+        mermaid(data_to_visualize.get('code'))
