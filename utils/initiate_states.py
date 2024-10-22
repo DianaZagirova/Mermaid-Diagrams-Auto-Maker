@@ -30,6 +30,16 @@ def init_states():
     if "text_to_download" not in st.session_state:
         st.session_state.text_to_download = ""
 
+    if "mermaid_code_chat_based" not in st.session_state:
+        st.session_state.mermaid_code_chat_based = ""
+
+    if "mermaid_link_chat_based" not in st.session_state:
+        st.session_state.mermaid_link_chat_based = ""
+
+    if "text_to_download_chat_based" not in st.session_state:
+        st.session_state.text_to_download_chat_based = ""
+
+
     if "question_current" not in st.session_state:
             st.session_state.question_current = ''
             
