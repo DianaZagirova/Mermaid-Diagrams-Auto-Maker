@@ -8,7 +8,7 @@ from llm.llm_utils import get_llm_response_model_specific, init_llm_model_specif
 from formatting.custom_styles import apply_custom_style
 from formatting.chat_interface import handle_userInput 
 from utils.initiate_states import init_states 
-from utils.general_utils import configure_assistant_prompt
+from utils.general_utils import configure_assistant_prompt, check_and_rerun
 from pydantic import BaseModel, Field, Extra
 from typing import Dict, List, Type, Optional, Any
 from langchain.schema import SystemMessage
@@ -16,7 +16,6 @@ from langchain.callbacks import get_openai_callback
 from langchain_community.chat_message_histories import StreamlitChatMessageHistory
 from langchain_community.tools import DuckDuckGoSearchRun
 from agent.agent import Agent
-
 
 apply_custom_style()
 init_states()
@@ -115,14 +114,15 @@ if st.button('Generate Mermaid!') and st.session_state.settings_current != st.se
         st.session_state.mermaid_input = st.session_state.text_input
     st.session_state.settings_previous = st.session_state.settings_current 
     st.session_state.mermaid_code_chat_based, st.session_state.mermaid_link_chat_based, st.session_state.text_to_download_chat_based = "", "", "" 
+    st.session_state.question_previous = ""
+    st.session_state.question_current = ""
+    st.session_state.chat_history = []
           
     st.session_state.mermaid_code, st.session_state.mermaid_link, st.session_state.text_to_download = get_mermaid_data(st.session_state.mermaid_input, st.session_state.selected_prompt_for_diagram_creation, diagram_model, main_temperature)
 
 msgs = StreamlitChatMessageHistory(key="special_app_key")
 user_question = []
 col_chat , col_diagram  = st.columns([1,1])
-with col_diagram:
-    render_mermaid()
 
 with col_chat:
     st.session_state.question_current = st.text_area(label="**Chat on a diagram (Agent already knows about your data/code)**", height = 130, placeholder="Fix the diagram to add a new block - 'Current treatment options'")
@@ -148,7 +148,6 @@ with col_chat:
 
     if st.session_state.question_current and run_chat:        
         with get_openai_callback() as cb: 
-
                 st.session_state.mermaid_code_chat_based, st.session_state.mermaid_link_chat_based, st.session_state.text_to_download_chat_based = get_mermaid_data(st.session_state.question_current, assistant_prompt, "gpt-4o", 0.2)
 
         st.session_state.question_previous = st.session_state.question_current 
@@ -157,3 +156,7 @@ with col_chat:
         handle_userInput(st.session_state.chat_history)
     else:
         handle_userInput(st.session_state.chat_history)
+    check_and_rerun()
+
+with col_diagram:
+    render_mermaid()

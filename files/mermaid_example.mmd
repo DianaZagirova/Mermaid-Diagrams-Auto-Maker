@@ -1,0 +1,42 @@
+flowchart TB
+ %% NRF2 Activation Pathways
+A["NRF2 Activation Pathways"]:::primary
+A1["Canonical Pathway"]:::secondary
+A2["Non-Canonical Pathway"]:::secondary
+B1["Keap1 binds NRF2"]:::tertiary
+B2["Oxidative Stress"]:::tertiary
+B3["Competing Proteins"]:::tertiary
+B4["PI3K/Akt Pathway"]:::tertiary
+
+ %% Key Roles and Functions of NRF2
+B["Key Roles and Functions of NRF2"]:::primary
+B5["Oxidative Stress Response"]:::secondary
+B6["Inflammation Modulation"]:::secondary
+B7["Immune Response"]:::secondary
+
+ %% Implications in Diseases
+C["Implications in Diseases"]:::primary
+C1["Cancer"]:::secondary
+C2["Neurodegenerative Diseases"]:::secondary
+C3["Metabolic Disorders"]:::secondary
+C4["Inflammatory Diseases"]:::secondary
+
+ %% Therapeutic Potential and Future Directions
+D["Therapeutic Potential and Future Directions"]:::primary
+D1["Pharmacological Modulators"]:::secondary
+D2["Research Focus"]:::secondary
+
+ %% Connections
+A --> A1 & A2
+A1 --> B1 & B2
+A2 --> B3 & B4
+A --> B
+B --> B5 & B6 & B7
+B --> C
+C --> C1 & C2 & C3 & C4
+C --> D
+D --> D1 & D2
+
+ %% Styling
+classDef primary fill:#f4eecf, stroke:#333, stroke-width:1px, color:#333;
+classDef secondary fill:#abc5a0, stroke:#333, stroke-width:1px, color:#333;

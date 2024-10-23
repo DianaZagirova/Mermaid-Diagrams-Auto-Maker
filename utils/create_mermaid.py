@@ -10,6 +10,8 @@ from langchain.schema import HumanMessage, SystemMessage
 from llm.llm_utils import init_llm, init_llm_model_specific
 import streamlit.components.v1 as components
 import os
+import subprocess
+import tempfile
 
 def convert_to_single_line(output):
     lines = output.strip().split('\n')
@@ -86,12 +88,44 @@ def get_mermaid_data(context, prompt, diagram_model, main_temperature):
             HumanMessage(content = context)
         ]      
         res = llm(messages=msg, temperature = main_temperature)        
-        mermaid_code = res.content.strip('```').strip('\n```').strip('```\n').strip('```\n\n').strip('\n\n```').splitlines()[0:-1]
+        mermaid_code = res.content.strip('```').strip('\n```').strip('```\n').strip('```\n\n').strip('mermaid').strip('```\n').strip('\n\n```').splitlines()[0:-1]
         mermaid_code = '\n'.join(mermaid_code)
         text_to_download = StringIO(mermaid_code) 
         mermaid_link = genPakoLink(mermaid_code)
         return mermaid_code, mermaid_link, text_to_download 
             
+def run_mermaid_cli(mermaid_syntax):
+   
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.mmd') as input_file:
+        input_file_name = input_file.name
+        input_file.write(mermaid_syntax.encode())
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.svg') as output_file:
+        output_file_name = output_file.name
+
+    command = [
+        'mmdc',
+        '-i', input_file_name,
+        '-o', output_file_name,
+        '--puppeteerConfigFile', 'puppeteer-config.json'
+    ]
+
+    try:
+        subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        st.download_button(
+            label="Save Mermaid as SVG",
+            data=open(output_file_name, 'rb'),
+            file_name='mermaid_file.svg',
+            mime='image/svg+xml'
+        )
+
+    except subprocess.CalledProcessError as e:
+        st.error("An error occurred while executing the command.")
+        print("Output:", e.output.decode())
+        print("Error:", e.stderr.decode())
+
+    except FileNotFoundError:
+        st.error("The 'mmdc' command is not found. Make sure Mermaid CLI is installed and available in your PATH.")
 
 def render_mermaid():
     if not st.session_state.mermaid_code:
@@ -117,10 +151,14 @@ def render_mermaid():
         
 
         col_update, col_download_code, col_download_html = st.columns([2, 2, 2])
+        # with col_update:
+        #     rerender = st.button("Update chart")
+        #     if rerender:
+        #         st.rerun()
+
         with col_update:
-            rerender = st.button("Update chart")
-            if rerender:
-                st.rerun()
+            run_mermaid_cli(data_to_visualize.get('code'))
+
         with col_download_code:
             st.download_button(
                 label="Save Mermaid as TXT",
