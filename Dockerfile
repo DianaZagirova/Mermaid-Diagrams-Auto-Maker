@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -yqq \
     # Essential tools
     git \
     g++ \
-    curl \
+    curl \    
     gnupg \
     ca-certificates \
     # Chromium dependencies

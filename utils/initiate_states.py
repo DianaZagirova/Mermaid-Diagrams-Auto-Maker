@@ -2,6 +2,9 @@ import streamlit as st
 
 
 def init_states():
+    if "internal_history" not in st.session_state:
+        st.session_state.internal_history = []
+
     if "text_input" not in st.session_state:
         st.session_state.text_input = ""
 

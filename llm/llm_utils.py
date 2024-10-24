@@ -71,8 +71,4 @@ def get_llm_response_model_specific(model, system_prompt, user_query, summarizat
             HumanMessage(content=user_query)
         ]        
         res = llm(messages=msg, temperature = summarization_temperature)
-        # st.write(f"this is system_prompt- {system_prompt}")
-        # st.write(f"this is user_query- {user_query}")
-        # st.write(f"this is res- {res}")
-
         return res.content

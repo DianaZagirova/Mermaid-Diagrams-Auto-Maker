@@ -6,7 +6,6 @@
 **/output.*
 **.pyc
 **.ipynb_checkpoints/
-/*.ipynb
 build/
 ./additional_mappings/
 ./backup/
