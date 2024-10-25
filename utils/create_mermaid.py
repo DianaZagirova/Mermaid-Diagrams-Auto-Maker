@@ -52,7 +52,6 @@ def get_mermaid_as_html(code: str, filename: str = "mermaid_diagram.html") -> No
     """
     return html_content
 
-    
 def js_btoa(data):
     return base64.b64encode(data)
 
@@ -70,7 +69,6 @@ def genPakoLink(graphMarkdown: str):
     link = 'http://mermaid.live/edit#pako:' + dEncode.decode('ascii')
     return link
 
-
 def get_prompt(graph_type):
     graph_type_to_prompt = {"**Graphical abstract** 📚": "system_prompt_for_mermaid_graphical_abstract",
                                 "**Flowchart**" :"system_prompt_for_mermaid_flowchart", 
@@ -82,10 +80,43 @@ def get_prompt(graph_type):
     llm_prompts = json.load(open("./prompts/llm_prompts.json"))  
     return llm_prompts.get(selected_prompt)
 
-def get_mermaid_data(context: str, prompt: str, diagram_model: str, main_temperature: float, review_code: bool =False, user_history: bool = False, history: list = None) -> Tuple[str, str, StringIO]:
+def validate_mermaid_syntax(mermaid_code: str) -> Tuple[bool, str]:
+    """
+    Validates the syntax of Mermaid code by attempting to generate an SVG using the Mermaid CLI.
+    
+    Parameters:
+    - mermaid_code (str): The Mermaid code to validate.
+    
+    Returns:
+    - Tuple[bool, str]: A tuple containing a boolean indicating if the syntax is valid,
+                        and a string with an error message if invalid (empty string if valid).
+    """
+    # Create a temporary file for the SVG output
+    with tempfile.NamedTemporaryFile(suffix='.svg', delete=False) as temp_file:
+        temp_output_path = temp_file.name
+
+    try:
+        # Attempt to run the Mermaid CLI with the provided code
+        is_valid = run_mermaid_cli(mermaid_code, streamlit_usage=False, output_file_path=temp_output_path)
+        
+        if is_valid:
+            return True, ""
+        else:
+            return False, "Failed to generate SVG from Mermaid code. The syntax may be invalid."
+    
+    except Exception as e:
+        return False, f"An error occurred while validating Mermaid syntax: {str(e)}"
+    
+    finally:
+        # Clean up the temporary SVG file
+        if os.path.exists(temp_output_path):
+            os.remove(temp_output_path)
+
+def get_mermaid_data(context: str, prompt: str, diagram_model: str, main_temperature: float, review_code: bool =False, user_history: bool = False, history: list = None, n_retries: int = 3) -> Tuple[str, str, StringIO]:
     """
     Generates and returns Mermaid diagram data, download link, and a string buffer for export.
     Given a text (context) and prompt this function initializes the LLM to retrieve a Mermaid diagram.
+    It will retry generating valid Mermaid code up to n_retries times if the initial attempt is not successful.
 
     Parameters:
     - context (str): The context or content that will be interpreted by LLM.
@@ -93,6 +124,8 @@ def get_mermaid_data(context: str, prompt: str, diagram_model: str, main_tempera
     - diagram_model (str): The specific diagram model identifier for initializing the LLM.
     - main_temperature (float): The temperature setting for generating variations in LLM outputs.
     - history (list): The list of the previous messages
+    - n_retries (int): The number of times to retry generating valid Mermaid code.
+
 
     Returns:
     - Tuple[str, str, StringIO]: Returns a tuple containing Mermaid code, 
@@ -100,32 +133,43 @@ def get_mermaid_data(context: str, prompt: str, diagram_model: str, main_tempera
                                   object representing the text to be downloaded.
     """
     llm = init_llm_model_specific(diagram_model)
-    if user_history:
-        messages = history
-    else:
-        messages = [
-                SystemMessage(content=prompt),
-                HumanMessage(content=context)
-            ]
-
-    response = llm(messages=messages, temperature=main_temperature)
-    raw_content = response.content
     
-    if review_code:
-        llm_prompts = json.load(open("./prompts/llm_prompts.json"))
-        messages = [
-                SystemMessage(content=llm_prompts.get("diagram_reviewer_prompt")),
-                HumanMessage(content=raw_content)
-            ]
+    for attempt in range(n_retries):
+        if user_history:
+            messages = history
+        else:
+            messages = [
+                    SystemMessage(content=prompt),
+                    HumanMessage(content=context)
+                ]
+            
         response = llm(messages=messages, temperature=main_temperature)
         raw_content = response.content
+        
+        if review_code:
+            llm_prompts = json.load(open("./prompts/llm_prompts.json"))
+            messages = [
+                    SystemMessage(content=llm_prompts.get("diagram_reviewer_prompt")),
+                    HumanMessage(content=raw_content)
+                ]
+            response = llm(messages=messages, temperature=main_temperature)
+            raw_content = response.content
 
-    
-    mermaid_code = extract_mermaid_code(raw_content)
+        mermaid_code = extract_mermaid_code(raw_content)    
+        is_valid, error_message = validate_mermaid_syntax(mermaid_code)
+        # st.write(f"attempt - {attempt}, is_valid - {is_valid}, error_message - {error_message}") #print logs
+        if is_valid:
+            text_to_download = StringIO(mermaid_code)
+            mermaid_link = genPakoLink(mermaid_code)
+            return mermaid_code, mermaid_link, text_to_download
+        else:
+            logging.error(f"Attempt {attempt + 1}/{n_retries}: Mermaid syntax error: {error_message}")            
+            if attempt == n_retries - 1:
+                logging.error(f"Failed to generate valid Mermaid code after {n_retries} attempts.")    
+        
     text_to_download = StringIO(mermaid_code)
     mermaid_link = genPakoLink(mermaid_code)
     return mermaid_code, mermaid_link, text_to_download
-
 
 def extract_mermaid_code(raw_content: str) -> str:
     """
@@ -174,6 +218,10 @@ def run_mermaid_cli(
         The file path where the SVG file will be saved. The default path is "./files/mermaid_output.svg".
         The function will create any necessary directories if they do not exist.    
     
+    Returns:
+    --------
+    bool: True if the Mermaid CLI executed successfully, False otherwise.
+
     Notes:
     ------
     - Ensure that the Mermaid CLI (mmdc) and necessary configurations are correctly installed and configured.
@@ -227,17 +275,21 @@ def run_mermaid_cli(
         with open(output_file_name, 'r') as svg_file, open(output_file_path, 'w') as output_file:
             output_file.write(svg_file.read())
             logging.info(f"SVG file saved as {output_file_path}")
+        return True
 
     except subprocess.CalledProcessError as e:
         logging.error(f"An error occurred while executing the Mermaid CLI command")
         logging.debug("Output: %s", e.output.decode('utf-8'))
         logging.debug("Error: %s", e.stderr.decode('utf-8'))
+        return False
         
     except FileNotFoundError:
         logging.error("The 'mmdc' command is not found. Ensure Mermaid CLI is installed and available in your PATH.")
         if streamlit_usage and st is not None:
-            st.error("The 'mmdc' command is not found. Make sure Mermaid CLI is installed and available in your PATH.")
-        raise
+            st.error("The 'mmdc' command is not found. Make sure Mermaid CLI is installed and available in your PATH.")        
+        return True
+        
+    
     finally:
         if input_file_name and os.path.exists(input_file_name):
             os.remove(input_file_name)
@@ -263,7 +315,7 @@ def render_mermaid():
         col_download_svg, col_download_code, col_download_html = st.columns([2, 2, 2])
 
         with col_download_svg:
-            run_mermaid_cli(data_to_visualize.get('code'))
+            svg_status = run_mermaid_cli(data_to_visualize.get('code'))
 
         with col_download_code:
             st.download_button(

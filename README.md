@@ -1,54 +1,61 @@
 # AI-Driven Mermaid Diagram Creation
 
-This is the repository for an feature of DORA application that automates the creation of Mermaid diagrams from the paper text. This feature utilizes LLM to produce seveeral diagram types such as graphical abstracts, flowcharts, sequence diagrams, and state diagrams.
+This repository is part of the DORA application and features an automated system for generating Mermaid diagrams from the text of scientific papers. This functionality leverages Large Language Models (LLMs) to produce various diagram types, including graphical abstracts, flowcharts, sequence diagrams, and state diagrams.
+
+For more information on Mermaid, visit the official documentation: [Mermaid](https://mermaid.js.org). You can also use the online visualizer for Mermaid code here: [Mermaid Live Editor](https://mermaid.live).
 
 ## Features
-! Example workflow is added to ./examples/diagram_creation_flow.ipynb
+
+An example workflow is provided in `./examples/diagram_creation_flow.ipynb`.
+A main file for a diagram creation `./utils/create_mermaid.py`.
+
 
 ### 1. Create Graphical Abstract
-- **Converts scientific narrative into graphical abstracts.**
-This type of the figure should be generated for each document that has section with a title "Abstract". 
-- **Input:** All paper text. Preperably from with the rendered links in form Author, year; not with BIB_ID / CHUNK_ID.
-- **Processing:** 
-1. Prior to generation, the text should be summarized with LLM ('summary_prompt' from "./prompts/llm_prompts.json"). This ensures the better quality of the diagram.
-2. Text summary should be used to create the graphical abstract. The graphical abstract is the flowchart type diagram from the mermaid. 
-The main function - get_mermaid_data (utils.create_mermaid). This function outputs: mermaid code and the link to mermaid online editor.
-3. The results could be saved to SVG through mermaid cli (https://github.com/mermaid-js/mermaid-cli). SVG could be rendered on DORA website.
-- **Output:** A stylized Mermaid diagram visualizing the key concepts of the text.
+
+- **Purpose:** Converts scientific narratives into graphical abstracts. This type of figure should be generated for every document that contains a section titled "Abstract."
+- **Input:** Full text of the paper, preferably written with rendered links in the format Author, Year; do not use BIB_ID or CHUNK_ID.
+- **Processing:**
+  1. Prior to generation, the text is summarized using the LLM's 'summary_prompt' from `./prompts/llm_prompts.json`. This ensures better quality diagrams.
+  2. The text summary is then utilized to create the graphical abstract, which takes the form of a flowchart diagram in Mermaid syntax. The main function for this process is `get_mermaid_data (utils.create_mermaid)`, which outputs both the Mermaid code and a link to the Mermaid online editor.
+
+  ! Sometimes LLM fails to produce a valid mermaid code. There are some mechanisms that help to prevent this (function **get_mermaid_data** in `./utils/create_mermaid.py`):
+  - Additional LLM call is used with the prompt that asks to check the produced code and correct it if needed.
+  - Mermaid code is tried to be saved as SVG. If there are errors, retry is activated. 
+  - If the number of retries would be increased, it also increases the cost of generaion. But with high retry number, it is save to use very cheap models such as gpt-4o-mini.
+
+  3. The resulting diagram can be saved as an SVG file using the Mermaid CLI ([Mermaid CLI GitHub](https://github.com/mermaid-js/mermaid-cli)). The SVG can be rendered on the DORA website.
+- **Output:** A visually appealing Mermaid diagram that illustrates the key concepts of the text.
 
 ### 2. Create Other Charts
-- **Generates flowcharts, sequence diagrams, state diagrams, etc., based on user selection.**
-This feature should be similiar to AI actions in DORA. User selects the part of the texts, and the options to create one of the 3 charts appear (flowchart, sequence diagram, state diagram). 
-- **Input:** The selected text part
-- **Processing:** 
-1. The selected text without any processing is directly used for diagram creation. The corresponding prompt should be selected based on the specified graph type.
-The main function - get_mermaid_data (utils.create_mermaid). This function outputs: mermaid code and the link to mermaid online editor.
-2. The results could be saved to SVG through mermaid cli as well.
-- **Output:** Mermaid diagram of the selected type.
 
-### 3. Modify Chart with Custom prompts (Interactive Modifications)
-- **Allows interactive modifications via a custom prompts.**
-Feature that allow user to modify the generated figure: both graphical abstract and other chart types. 
-By clicking on the figure, the user should see the area asking to insert the custom prompt to modify the diagram. The default option could be "Make this graph in green shades".
-- **Input:** A user-defined command for changes.
-- **Processing:** 
-1. Configure the LLM to process this request. If this is the 1 interation of the user on this diagram, create message history with the system prompt. Configure the prompt to add the text based on which the diagram was created and the mermaid code itself.
-2. Run LLM get_mermaid_data (utils.create_mermaid). This function outputs: mermaid code and the link to mermaid online editor.
-3. Update the history to add user's questiona and the LLM response.
-- **Output:** Updated Mermaid code reflecting the changes and the corresponding SVG.
+- **Purpose:** Generates flowcharts, sequence diagrams, state diagrams, etc., based on user selection. This feature operates similarly to AI actions in DORA. Users can select a section of text, after which options to create one of the three chart types (flowchart, sequence diagram, state diagram) will appear.
+- **Input:** The selected portion of the text.
+- **Processing:**
+  1. The selected text undergoes minimal processing. Currently, no defined procedure for processing exists, but it is anticipated that a processing function may be required in the future. The current implementation uses the selected text directly for diagram creation.
+  2. The appropriate prompt is selected based on the chosen graph type. The main function for this process is also `get_mermaid_data (utils.create_mermaid)`, which generates the Mermaid code and provides a link to the Mermaid online editor.
+  3. Results can also be saved as SVG files through the Mermaid CLI.
+- **Output:** A Mermaid diagram of the specified type.
+
+### 3. Modify Chart with Custom Prompts (Interactive Modifications)
+
+- **Purpose:** Provides a feature for interactive modifications using custom prompts. Users can adjust the generated figures—both graphical abstracts and other chart types—by clicking on the figure to access an area for entering a custom prompt. A default option, such as "Make this graph in green shades," can be provided.
+- **Input:** A user-defined command for modifications.
+- **Processing:**
+  1. The LLM is configured to process the user's request. If this is the user's first interaction with the diagram, message history is created with the system prompt. The prompt includes the original text used to generate the diagram and the Mermaid code itself.
+  2. The LLM runs through `get_mermaid_data (utils.create_mermaid)`, which outputs the updated Mermaid code and a link to the editor.
+  3. The history is updated to log the user's question and the LLM's response.
+- **Output:** Updated Mermaid code reflecting the user changes, along with the corresponding SVG.
 
 ## How It Works
 
 1. **Text Summarization:**
-   - Utilizes language models to summarize the input text if needed (only for Graphical Abstract)
-   
+   - Utilizes LLMs to summarize the input text when necessary (applies only to graphical abstracts).
+  
 2. **Diagram Generation:**
-   - Employs specific prompts for each diagram type to convert text into Mermaid code.
-   
+   - Uses specific prompts for each diagram type to convert text into Mermaid code.
+  
 3. **Rendering and Exporting:**
-   - Processes the Mermaid code using the Mermaid CLI to generate SVG outputs.
-   - Saves and provides links to the generated diagrams.
-
+   - Processes the Mermaid code through the Mermaid CLI to generate SVG files, saving and providing links to the created diagrams.
+  
 4. **Interactive Modifications:**
-   - A chat history is maintained to facilitate contextual modifications to the diagrams.
-
+   - Maintains chat history to enable contextual modifications to the diagrams.
