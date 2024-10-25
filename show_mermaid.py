@@ -52,7 +52,12 @@ with col_text:
     with st.expander('3. Edit prompt for a diagram creation'):
         st.session_state.selected_prompt_for_diagram_creation = st.text_area("", height=300, value = st.session_state.prompt_for_diagram_creation.get(graph_type))    
 
-    col_model_main , col_temperature_main = st.columns([1,1])
+    col_review, col_model_main , col_temperature_main = st.columns([1,1,1])
+    with col_review:
+        st.session_state.review_code = st.checkbox(
+        "Activate mermaid code reviewer",
+        key="reviewer_activate"
+    ) 
     with col_model_main:
          diagram_model = st.radio(
         "Model to use for diagram creation",
@@ -93,6 +98,7 @@ with col_text:
 
 st.session_state.settings_current = {"text":st.session_state.text_input, 
                                     "graph_type":graph_type,
+                                    "review_code":st.session_state.review_code,
                                     "make_summary":make_summary,
                                     "summarization_model":summarization_model,
                                     "diagram_model":diagram_model,
@@ -120,7 +126,7 @@ if st.button('Generate Mermaid!') and st.session_state.settings_current != st.se
     st.session_state.chat_history = []
     st.session_state.internal_history = []
           
-    st.session_state.mermaid_code, st.session_state.mermaid_link, st.session_state.text_to_download = get_mermaid_data(st.session_state.mermaid_input, st.session_state.selected_prompt_for_diagram_creation, diagram_model, main_temperature, review_code=False)
+    st.session_state.mermaid_code, st.session_state.mermaid_link, st.session_state.text_to_download = get_mermaid_data(st.session_state.mermaid_input, st.session_state.selected_prompt_for_diagram_creation, diagram_model, main_temperature, review_code=st.session_state.review_code)
 
 user_question = []
 col_chat , col_diagram  = st.columns([1,1])
@@ -145,7 +151,7 @@ with col_chat:
                 if not st.session_state.internal_history:
                     st.session_state.internal_history.append(SystemMessage(content=assistant_prompt))
                 st.session_state.internal_history.append(HumanMessage(content=st.session_state.question_current)) 
-                st.session_state.mermaid_code_chat_based, st.session_state.mermaid_link_chat_based, st.session_state.text_to_download_chat_based = get_mermaid_data(st.session_state.question_current, assistant_prompt, "gpt-4o", 0.2, review_code=False, user_history=True, history = st.session_state.internal_history)
+                st.session_state.mermaid_code_chat_based, st.session_state.mermaid_link_chat_based, st.session_state.text_to_download_chat_based = get_mermaid_data(st.session_state.question_current, assistant_prompt, "gpt-4o", 0.2, review_code=st.session_state.review_code, user_history=True, history = st.session_state.internal_history)
         st.session_state.internal_history.append(AIMessage(content=st.session_state.mermaid_code_chat_based))
         st.session_state.question_previous = st.session_state.question_current 
         st.session_state.chat_history.append(st.session_state.mermaid_code_chat_based)

@@ -2,6 +2,9 @@ import streamlit as st
 
 
 def init_states():
+    if "review_code" not in st.session_state:
+        st.session_state.review_code = False
+        
     if "internal_history" not in st.session_state:
         st.session_state.internal_history = []
 

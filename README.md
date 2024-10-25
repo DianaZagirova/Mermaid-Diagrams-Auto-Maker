@@ -3,6 +3,7 @@
 This is the repository for an feature of DORA application that automates the creation of Mermaid diagrams from the paper text. This feature utilizes LLM to produce seveeral diagram types such as graphical abstracts, flowcharts, sequence diagrams, and state diagrams.
 
 ## Features
+! Example workflow is added to ./examples/diagram_creation_flow.ipynb
 
 ### 1. Create Graphical Abstract
 - **Converts scientific narrative into graphical abstracts.**
