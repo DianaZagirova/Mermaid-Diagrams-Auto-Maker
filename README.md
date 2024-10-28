@@ -18,7 +18,7 @@ A main file for a diagram creation `./utils/create_mermaid.py`.
   1. Prior to generation, the text is summarized using the LLM's 'summary_prompt' from `./prompts/llm_prompts.json`. This ensures better quality diagrams.
   2. The text summary is then utilized to create the graphical abstract, which takes the form of a flowchart diagram in Mermaid syntax. The main function for this process is `get_mermaid_data (utils.create_mermaid)`, which outputs both the Mermaid code and a link to the Mermaid online editor.
 
-  ! Sometimes LLM fails to produce a valid mermaid code. There are some mechanisms that help to prevent this ( [validation function](https://gitlab.com/insilicoteam/pandomics/paperdrafttool/-/blob/mermaid_diagrams/utils/create_mermaid.py?ref_type=heads#L83) in `./utils/create_mermaid.py`):
+  ! Sometimes LLM fails to produce a valid mermaid code. There are some mechanisms that help to prevent this ( [validation function](https://gitlab.com/insilicoteam/pandomics/paperdrafttool/-/blob/mermaid_diagrams/utils/create_mermaid.py?ref_type=heads#L205) in `./utils/create_mermaid.py`):
   - Additional LLM call is used with the prompt that asks to check the produced code and correct it if needed.
   - Mermaid code is tried to be saved as SVG. If there are errors, retry is activated. 
   - If the number of retries would be increased, it also increases the cost of generaion. But with high retry number, it is save to use very cheap models such as gpt-4o-mini.
