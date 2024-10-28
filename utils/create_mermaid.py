@@ -5,21 +5,32 @@ import zlib
 import streamlit as st
 from io import StringIO
 import os
-from langchain.schema import HumanMessage, SystemMessage, AIMessage
-from llm.llm_utils import init_llm, init_llm_model_specific
+from langchain.schema import HumanMessage, SystemMessage
+from llm.llm_utils import init_llm_model_specific
 import streamlit.components.v1 as components
 import subprocess
 import tempfile
 from IPython.display import SVG, display
+from typing import Tuple, Optional, Dict, Any, Union
 import logging
-from typing import Tuple
 
-def convert_to_single_line(output):
-    lines = output.strip().split('\n')
-    single_line = ';'.join(lines) + ';'
-    return single_line
+logging.basicConfig(level=logging.INFO)
 
 def mermaid(code: str) -> None:
+    """
+    Renders a Mermaid diagram using the provided code string and displays it in HTML format.
+
+    This function takes a string containing the Mermaid syntax for a diagram and embeds it within 
+    an HTML structure that utilizes Mermaid's JavaScript library to visualize the diagram. 
+    Parameters:
+    ----------
+    code : str
+        A string that contains the Mermaid diagram definition code.
+
+    Returns:
+    -------
+    None           
+    """
     components.html(
         f"""
         <pre class="mermaid">
@@ -34,7 +45,19 @@ def mermaid(code: str) -> None:
         height=800,
     )
 
-def get_mermaid_as_html(code: str, filename: str = "mermaid_diagram.html") -> None:
+def get_mermaid_as_html(code: str) -> str:
+    """
+    Generates an HTML string that embeds a Mermaid diagram.
+
+    This function takes a Mermaid code string as input and returns a formatted HTML document. 
+    The generated HTML includes the necessary JavaScript to import and initialize Mermaid when the document is loaded.
+
+    Parameters:
+    code (str): A string containing the Mermaid syntax to define the diagram.
+
+    Returns:
+    str: A string containing the complete HTML document ready for rendering a Mermaid diagram.
+    """
     html_content = f"""
     <html>
     <head>
@@ -52,33 +75,132 @@ def get_mermaid_as_html(code: str, filename: str = "mermaid_diagram.html") -> No
     """
     return html_content
 
-def js_btoa(data):
+def js_btoa(data: bytes) -> bytes:
+    """
+    Encodes the input bytes using Base64 encoding.
+
+    Parameters:
+    ----------
+    data : bytes
+        The input data to be encoded.
+
+    Returns:
+    -------
+    bytes
+        The Base64 encoded data.
+
+    Raises:
+    ------
+    TypeError
+        If the input is not of type bytes.
+    """
+    if not isinstance(data, bytes):
+        raise TypeError("Input must be of type bytes")
     return base64.b64encode(data)
 
-def pako_deflate(data):
+def pako_deflate(data: bytes) -> bytes:
+    """
+    Compresses the input data using zlib compression.
+
+    Parameters:
+    ----------
+    data : bytes
+        The input data to be compressed.
+
+    Returns:
+    -------
+    bytes
+        The compressed data.
+
+    Raises:
+    ------
+    TypeError
+        If the input is not of type bytes.
+    """
+    if not isinstance(data, bytes):
+        raise TypeError("Input must be of type bytes")
     compress = zlib.compressobj(9, zlib.DEFLATED, 15, 8, zlib.Z_DEFAULT_STRATEGY)
     compressed_data = compress.compress(data)
     compressed_data += compress.flush()
     return compressed_data
 
-def genPakoLink(graphMarkdown: str):
-    jGraph = {"code": graphMarkdown, "mermaid": {"theme": "default"}}
-    byteStr = json.dumps(jGraph).encode('utf-8')
-    deflated = pako_deflate(byteStr)
-    dEncode = js_btoa(deflated)
-    link = 'http://mermaid.live/edit#pako:' + dEncode.decode('ascii')
-    return link
+def genPakoLink(graphMarkdown: str) -> str:
+    """
+    Generates a Mermaid Live Editor link for the given graph markdown.
 
-def get_prompt(graph_type):
-    graph_type_to_prompt = {"**Graphical abstract** 📚": "system_prompt_for_mermaid_graphical_abstract",
-                                "**Flowchart**" :"system_prompt_for_mermaid_flowchart", 
-                                "**Sequence Diagram**":"system_prompt_for_mermaid_sequence_diagram", 
-                                "**State Diagram**":"system_prompt_for_mermaid_state_diagram",
-                                "**Timeline Diagram**":"system_prompt_for_mermaid_timeline_diagram", 
-                                "**Pie Chart**":"system_prompt_for_mermaid_flowchart_pie_chart"}
+    Parameters:
+    ----------
+    graphMarkdown : str
+        The Mermaid graph markdown to be encoded in the link.
+
+    Returns:
+    -------
+    str
+        A URL for the Mermaid Live Editor with the encoded graph.
+
+    Raises:
+    ------
+    json.JSONDecodeError
+        If there's an error in JSON encoding.
+    """
+    try:
+        jGraph = {"code": graphMarkdown, "mermaid": {"theme": "default"}}
+        byteStr = json.dumps(jGraph).encode('utf-8')
+        deflated = pako_deflate(byteStr)
+        dEncode = js_btoa(deflated)
+        link = 'http://mermaid.live/edit#pako:' + dEncode.decode('ascii')
+        return link
+    except json.JSONDecodeError as e:
+        logging.error(f"Error in JSON encoding: {str(e)}")
+        raise
+    except Exception as e:
+        logging.error(f"Unexpected error in genPakoLink: {str(e)}")
+        raise
+
+def get_prompt(graph_type: str) -> Optional[str]:
+    """
+    Retrieves the appropriate prompt for a given graph type from a JSON file.
+
+    Parameters:
+    ----------
+    graph_type : str
+        The type of graph for which to retrieve the prompt.
+
+    Returns:
+    -------
+    Optional[str]
+        The prompt for the specified graph type, or None if not found.
+
+    Raises:
+    ------
+    FileNotFoundError
+        If the JSON file containing prompts is not found.
+    json.JSONDecodeError
+        If there's an error in decoding the JSON file.
+    """
+    graph_type_to_prompt = {
+        "**Graphical abstract** 📚": "system_prompt_for_mermaid_graphical_abstract",
+        "**Flowchart**": "system_prompt_for_mermaid_flowchart",
+        "**Sequence Diagram**": "system_prompt_for_mermaid_sequence_diagram",
+        "**State Diagram**": "system_prompt_for_mermaid_state_diagram",
+        "**Timeline Diagram**": "system_prompt_for_mermaid_timeline_diagram",
+        "**Pie Chart**": "system_prompt_for_mermaid_flowchart_pie_chart"
+    }
     selected_prompt = graph_type_to_prompt.get(graph_type)
-    llm_prompts = json.load(open("./prompts/llm_prompts.json"))  
-    return llm_prompts.get(selected_prompt)
+    if not selected_prompt:
+        logging.warning(f"No prompt found for graph type: {graph_type}")
+        return None
+
+    try:
+        with open("./prompts/llm_prompts.json", 'r') as f:
+            llm_prompts = json.load(f)
+        return llm_prompts.get(selected_prompt)
+    except FileNotFoundError:
+        logging.error("llm_prompts.json file not found")
+        raise
+    except json.JSONDecodeError as e:
+        logging.error(f"Error decoding JSON in llm_prompts.json: {str(e)}")
+        raise
 
 def validate_mermaid_syntax(mermaid_code: str) -> Tuple[bool, str]:
     """
@@ -91,12 +213,10 @@ def validate_mermaid_syntax(mermaid_code: str) -> Tuple[bool, str]:
     - Tuple[bool, str]: A tuple containing a boolean indicating if the syntax is valid,
                         and a string with an error message if invalid (empty string if valid).
     """
-    # Create a temporary file for the SVG output
     with tempfile.NamedTemporaryFile(suffix='.svg', delete=False) as temp_file:
         temp_output_path = temp_file.name
 
     try:
-        # Attempt to run the Mermaid CLI with the provided code
         is_valid = run_mermaid_cli(mermaid_code, streamlit_usage=False, output_file_path=temp_output_path)
         
         if is_valid:
@@ -108,7 +228,6 @@ def validate_mermaid_syntax(mermaid_code: str) -> Tuple[bool, str]:
         return False, f"An error occurred while validating Mermaid syntax: {str(e)}"
     
     finally:
-        # Clean up the temporary SVG file
         if os.path.exists(temp_output_path):
             os.remove(temp_output_path)
 
@@ -177,6 +296,7 @@ def extract_mermaid_code(raw_content: str) -> str:
 
     This function removes unwanted characters and markdown artifacts, providing
     clean Mermaid code ready for use or download.
+    Assume the Mermaid code is enclosed within Markdown code block syntax.
 
     Parameters:
     - raw_content (str): The raw content string from the LLM response.
@@ -184,23 +304,18 @@ def extract_mermaid_code(raw_content: str) -> str:
     Returns:
     - str: Refined Mermaid code as a string.
     """
-    # Clean up the Mermaid code by stripping markdown artifacts and extra characters.
-    # Assume the Mermaid code is enclosed within Markdown code block syntax.
-    # Clean up steps focus on removing these markers and empty lines.
     stripped_content = raw_content.strip('```').strip().split('\n')
     
-    # Further cleaning if the 'mermaid' label might be included inside the code block.
     if stripped_content and stripped_content[0].startswith('mermaid'):
         stripped_content = stripped_content[1:]
     
-    # Join the lines back together to form the cleaned Mermaid code.
     return '\n'.join(stripped_content).strip() 
             
 def run_mermaid_cli(
     mermaid_syntax: str,
     streamlit_usage: bool = True,
     output_file_path: str = "./files/mermaid_output.svg"
-):
+) -> bool:
     """
     Generates an SVG file from Mermaid syntax using the Mermaid CLI.
     This function takes Mermaid syntax as input and utilizes the Mermaid CLI to generate an SVG file.
@@ -236,7 +351,7 @@ def run_mermaid_cli(
         with tempfile.NamedTemporaryFile(delete=False, suffix='.mmd') as input_file:
             input_file_name = input_file.name
             input_file.write(mermaid_syntax.encode('utf-8'))
-            input_file.flush()  # Ensure data is written to disk
+            input_file.flush()  
 
         with tempfile.NamedTemporaryFile(delete=False, suffix='.svg') as output_file:
             output_file_name = output_file.name
@@ -287,8 +402,7 @@ def run_mermaid_cli(
         logging.error("The 'mmdc' command is not found. Ensure Mermaid CLI is installed and available in your PATH.")
         if streamlit_usage and st is not None:
             st.error("The 'mmdc' command is not found. Make sure Mermaid CLI is installed and available in your PATH.")        
-        return True
-        
+        return True        
     
     finally:
         if input_file_name and os.path.exists(input_file_name):
@@ -296,11 +410,45 @@ def run_mermaid_cli(
         if output_file_name and os.path.exists(output_file_name):
             os.remove(output_file_name)
 
-def render_mermaid():
+def download_buttons_layout(data_to_visualize):
+    """
+    Creates the layout for download buttons for SVG, TXT, and HTML formats.
+    """
+    col_download_svg, col_download_code, col_download_html = st.columns([2, 2, 2])
+
+    # Download SVG
+    with col_download_svg:
+        svg_status = run_mermaid_cli(data_to_visualize['code'])
+
+    # Download TXT file
+    with col_download_code:
+        st.download_button(
+            label="Save Mermaid as TXT",
+            data=data_to_visualize['text'].getvalue() if isinstance(data_to_visualize['text'], io.StringIO) else data_to_visualize['text'],
+            file_name="mermaid_diagram.txt",
+            mime="text/plain"
+        )
+
+    # Download HTML file
+    with col_download_html:
+        st.download_button(
+            label="Save Mermaid as HTML",
+            data=get_mermaid_as_html(data_to_visualize['code']),
+            file_name="mermaid_diagram.html",
+            mime="text/html"
+        )
+
+def render_mermaid() -> None:
+    """
+    Renders the Mermaid diagram based on user input stored in session state.
+    Provides options to download the diagram in multiple formats.
+    """
     if not st.session_state.mermaid_code:
         st.write('There has been no diagram created yet')
+
     else:
         st.write('**Mermaid data**')
+        
         if st.session_state.mermaid_code_chat_based:
             data_to_visualize = {"code":st.session_state.mermaid_code_chat_based, "link":st.session_state.mermaid_link_chat_based, "text":st.session_state.text_to_download_chat_based, "type" : "chat_based"}
         else:
@@ -312,24 +460,10 @@ def render_mermaid():
         with st.expander('Text for a diagram creation'):
             st.write(st.session_state.mermaid_input) 
 
-        col_download_svg, col_download_code, col_download_html = st.columns([2, 2, 2])
-
-        with col_download_svg:
-            svg_status = run_mermaid_cli(data_to_visualize.get('code'))
-
-        with col_download_code:
-            st.download_button(
-                label="Save Mermaid as TXT",
-                data=data_to_visualize.get('text').getvalue(),
-                file_name="mermaid_diagram.txt",
-                mime="text/plain"
-            )    
-        with col_download_html:
-            st.download_button(
-                label="Save Mermaid as HTML",
-                data=get_mermaid_as_html(st.session_state.mermaid_code),
-                file_name="mermaid_diagram.html"
-            )  
+        download_buttons_layout(data_to_visualize)
+          
         link='**The link for flowchart rendering on**  [mermaid_live]({mermaid_live})'.format(mermaid_live=data_to_visualize.get('link'))
         st.markdown(link, unsafe_allow_html=True) 
+
         mermaid(data_to_visualize.get('code'))
+
