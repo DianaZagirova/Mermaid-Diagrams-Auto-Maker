@@ -13,7 +13,7 @@ import tempfile
 from IPython.display import SVG, display
 from typing import Tuple, Optional, Dict, Any, Union
 import logging
-
+import io
 logging.basicConfig(level=logging.INFO)
 
 def mermaid(code: str) -> None:
