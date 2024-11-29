@@ -7,6 +7,7 @@ def handle_userInput(chat_history):
             f"""
             <div style="
                 border: 0px solid #1a73e8;
+                fornt-weight: 2;
                 border-radius: 7px;
                 padding: 10px;
                 display: flex;
@@ -23,7 +24,8 @@ def handle_userInput(chat_history):
         )
         
         else:
-            st.markdown(
+            with st.expander("Bot answer"):
+                st.markdown(
             f"""
             <div style="
                 border: 1px solid #1a73e8;

@@ -5,17 +5,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    restart: always
     ports:
       - "8510:8510"
-      - "8512:8512"
     volumes:
       - .:/app
-    networks:
-      - dianaz_shared_network
     container_name: mermaid_dianaz
     environment:
       - GIT_PYTHON_REFRESH=quiet
-
-networks:
-  dianaz_shared_network:
-    driver: bridge

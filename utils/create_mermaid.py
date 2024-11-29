@@ -144,7 +144,7 @@ def genPakoLink(graphMarkdown: str) -> str:
         If there's an error in JSON encoding.
     """
     try:
-        jGraph = {"code": graphMarkdown, "mermaid": {"theme": "default"}}
+        jGraph = {"code": graphMarkdown+'\n', "mermaid": {"theme": "default"}}
         byteStr = json.dumps(jGraph).encode('utf-8')
         deflated = pako_deflate(byteStr)
         dEncode = js_btoa(deflated)
@@ -276,7 +276,6 @@ def get_mermaid_data(context: str, prompt: str, diagram_model: str, main_tempera
 
         mermaid_code = extract_mermaid_code(raw_content)    
         is_valid, error_message = validate_mermaid_syntax(mermaid_code)
-        # st.write(f"attempt - {attempt}, is_valid - {is_valid}, error_message - {error_message}") #print logs
         if is_valid:
             text_to_download = StringIO(mermaid_code)
             mermaid_link = genPakoLink(mermaid_code)
@@ -414,7 +413,7 @@ def download_buttons_layout(data_to_visualize):
     """
     Creates the layout for download buttons for SVG, TXT, and HTML formats.
     """
-    col_download_svg, col_download_code, col_download_html = st.columns([2, 2, 2])
+    col_download_svg, col_download_code, col_download_html ,  colf1, colf2, colf3 = st.columns([2, 2, 2, 1,1,1])
 
     # Download SVG
     with col_download_svg:

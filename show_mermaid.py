@@ -29,13 +29,15 @@ col_settings, col_text = st.columns([1,3])
 with col_settings:
     graph_type = st.radio(
     "1. Select the graph type",
-    ["**Graphical abstract** 📚", "**Flowchart**", "**Sequence Diagram**", "**State Diagram**"],
+    ["**Graphical abstract** 📚", "**Flowchart**", "**Sequence Diagram**", "**State Diagram**", "**Timeline Diagram**"],
     captions=[
         "Graphical abstract of the paper",
         "Illustrate processes or workflows with steps and decision points",
         "Show interactions between entities over time",
-        "Illustrate changes in a system's state over time"
+        "Illustrate changes in a system's state over time",
+        "Show changes over time"
     ],
+
 )
     make_summary = False
 
@@ -129,13 +131,13 @@ if st.button('Generate Mermaid!') and st.session_state.settings_current != st.se
     st.session_state.mermaid_code, st.session_state.mermaid_link, st.session_state.text_to_download = get_mermaid_data(st.session_state.mermaid_input, st.session_state.selected_prompt_for_diagram_creation, diagram_model, main_temperature, review_code=st.session_state.review_code)
 
 user_question = []
-col_chat , col_diagram  = st.columns([1,1])
+col_diagram, col_chat   = st.columns([1.6,1])
 
 with col_chat:
     st.session_state.question_current = st.text_area(label="**Chat on a diagram (Agent already knows about your data/code)**", height = 130, placeholder="Fix the diagram to add a new block - 'Current treatment options'")
     assistant_prompt = configure_assistant_prompt() 
       
-    col_run, col_clear , colf1, colf2, colf3 = st.columns([2,2, 1, 1, 1])
+    col_run, col_clear , colf1, colf2, colf3 = st.columns([1,1, 0.5, 1, 1])
     with col_run: 
         run_chat = st.button('Run chat')
     with col_clear: 

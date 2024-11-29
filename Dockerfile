@@ -8,7 +8,7 @@ RUN pip install -r requirements.txt
 
 # Expose the port for Streamlit
 EXPOSE 8510
-EXPOSE 8511
+
 # Install system packages, Node.js, and Chromium dependencies
 RUN apt-get update && apt-get install -yqq \
     # Essential tools
@@ -55,4 +55,4 @@ COPY puppeteer-config.json /app/puppeteer-config.json
 COPY . /app
 
 # Run your Streamlit application
-CMD ["sh", "-c", "streamlit run show_mermaid.py --server.port 8510 --server.address 0.0.0.0 & jupyter notebook --ip=0.0.0.0 --port=8512 --no-browser --allow-root"]
+CMD ["sh", "-c", "streamlit run show_mermaid.py --server.port 8510 --server.address 0.0.0.0 & jupyter notebook --ip=0.0.0.0 --port=8522 --no-browser --allow-root"]

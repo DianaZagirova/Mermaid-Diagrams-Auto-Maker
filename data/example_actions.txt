@@ -1,0 +1,47 @@
+#### **1. Content Modification**
+
+- **Add or Remove a Node or Paths**
+  - *Example*: "Insert a new node labeled 'Immunotherapy' and connect it to 'Targeted Therapies'."
+  - *Example*: "Delete the 'JAK/STAT' pathway and its connections from the diagram."
+- **Rename Nodes or Labels**
+  - *Example*: "Change the label of 'Potential Solutions' to 'Emerging Treatments'."
+- **Add Annotations or Comments**
+  - *Example*: "Include a note explaining the significance of the 'PI3K/AKT/mTOR' pathway."
+- **Include Conditional Logic or Loops**
+  - *Example*: "Add a loop to represent the iterative review process in the publication workflow."
+
+#### **2. Visual Styling and Appearance**
+
+- **Apply a Different Color Scheme**
+  - *Example*: "Apply a monochromatic blue color palette to the entire diagram."
+- **Adjust Node Styling**
+  - *Example*: "Change all secondary nodes to have dashed borders and italic text."
+- **Change Font Styles and Sizes**
+  - *Example*: "Make all node labels bold and increase their font size."
+- **Highlight Specific Elements**
+  - *Example*: "Highlight the 'PI3K/AKT/mTOR' pathway in red to emphasize its importance."
+- **Add Tooltips or Hover Text**
+  - *Example*: "Add detailed descriptions that appear when hovering over 'HER2 Overexpression'."
+
+#### **3. Layout and Structure Modification**
+
+- **Change the Diagram Layout**
+  - *Example*: "Switch the flowchart to a left-to-right orientation instead of top-to-bottom."
+- **Reorder Nodes or Flow Direction**
+  - *Example*: "Reverse the flow of the diagram to go from bottom to top."
+- **Collapse or Expand Sections**
+  - *Example*: "Allow the 'Key Signaling Pathways' section to be collapsible."
+
+#### **4. Functionality and Export Options**
+
+- **Export Diagram in Different Formats**
+  - *Example*: "Export the diagram as a high-resolution PNG, PDF, or SVG file."
+- **Import Data**
+  - *Example*: "Import a CSV file to generate the diagram."
+
+#### **5. Interaction and Accessibility**
+
+- **Add Interactive Elements**
+  - *Example*: "Enable clicking on nodes to navigate to more detailed information."
+- **Enable Search within Diagram**
+  - *Example*: "Add a search function to find specific nodes like 'TP53'."
