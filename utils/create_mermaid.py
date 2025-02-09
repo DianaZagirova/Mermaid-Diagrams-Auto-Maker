@@ -392,7 +392,7 @@ def run_mermaid_cli(
         return True
 
     except subprocess.CalledProcessError as e:
-        logging.error(f"An error occurred while executing the Mermaid CLI command")
+        logging.error(f"An error occurred while executing the Mermaid CLI command - {e}")
         logging.debug("Output: %s", e.output.decode('utf-8'))
         logging.debug("Error: %s", e.stderr.decode('utf-8'))
         return False

@@ -1,5 +1,3 @@
-### Copyright (c) 2024 Insilico Medicine ###
-
 import streamlit as st
 
 def apply_custom_style():

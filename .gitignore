@@ -1,12 +1,44 @@
 
+# Python
+*.py[cod]
+__pycache__/
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+bin/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+venv/
+.env
+.venv
+env/
+ENV/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+*.sublime-workspace
+*.sublime-project
+
+# Project specific
 **.csv
 **csv.gz
-*.env
-**/__pycache__/
 **/output.*
-**.pyc
-**.ipynb_checkpoints/
-build/
 ./additional_mappings/
 ./backup/
 **other_tools.py
@@ -17,3 +49,23 @@ build/
 ./notebooks
 databases/
 ./back_notes
+
+# Logs and databases
+*.log
+*.sqlite
+*.db
+
+# Coverage and testing
+.coverage
+.tox/
+.pytest_cache/
+htmlcov/
+.mypy_cache/
+
+# Documentation
+docs/_build/
+site/
+
+# Docker
+.docker/
+docker-compose.override.yml

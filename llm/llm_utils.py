@@ -1,4 +1,4 @@
-from langchain.chat_models import AzureChatOpenAI, ChatOpenAI
+from langchain_community.chat_models import ChatOpenAI
 from langchain.schema import HumanMessage, SystemMessage
 from dotenv import load_dotenv
 import os
@@ -6,36 +6,18 @@ import streamlit as st
 from openai import OpenAI
 
 load_dotenv()
-azure_key_4o = os.getenv('AZURE_KEY')
-openai_key = os.getenv('OPENAI_KEY')
-# @st.cache_resource
-def init_llm():
-    llm = AzureChatOpenAI(
-            azure_endpoint="https://dora-dev.openai.azure.com/",
-            api_version="2024-02-15-preview",
-            openai_api_key=azure_key_4o,
-            openai_api_type="azure",
-            model="gpt-4o",
-            temperature=0.2        )
+openai_key = st.session_state.openai_api_key
 
-    return llm
-
+@st.cache_resource
 def init_llm_model_specific(model, streaming = False):
-    if model=="gpt-4o":
-        llm = AzureChatOpenAI(
-            azure_endpoint="https://dora-dev.openai.azure.com/",
-            api_version="2024-02-15-preview",
-            openai_api_key=azure_key_4o,
-            openai_api_type="azure",
-            model="gpt-4o",
-            streaming = streaming,
-            temperature=0.2        )
-    elif model == "gpt-4o-mini":
-        llm = ChatOpenAI(openai_api_key = openai_key, streaming = streaming, temperature=0.2 )
-    else:
-        raise ValueError(f"Unsupported model: {model}. Please use 'gpt-4o' or 'gpt-4o-mini'.")    
-    return llm
-
+    return ChatOpenAI(
+        openai_api_key=openai_key,
+        model_name=model,
+        streaming=streaming,
+        temperature=0.2,
+        max_retries=3
+    )
+    
 def ask_openai_llm(system_prompt, user_input):
     client = OpenAI(api_key = openai_key)
     response = client.chat.completions.create(
@@ -53,16 +35,6 @@ def ask_openai_llm(system_prompt, user_input):
         ]
     )
     return response.choices[0].dict()['message']['content']
-
-def get_llm_response(system_prompt, user_query):
-        llm = init_llm()             
-        msg = [
-            SystemMessage(content=system_prompt),
-            HumanMessage(content=user_query)
-        ]        
-        res = llm(messages=msg)
-        return res.content
-
 
 def get_llm_response_model_specific(model, system_prompt, user_query, summarization_temperature):
         llm = init_llm_model_specific(model)      

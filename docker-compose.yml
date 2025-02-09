@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  mermaid_dianaz:
+  auto_diagrams:
     build:
       context: .
       dockerfile: Dockerfile
@@ -10,6 +10,7 @@ services:
       - "8510:8510"
     volumes:
       - .:/app
-    container_name: mermaid_dianaz
+    container_name: auto_diagrams
     environment:
       - GIT_PYTHON_REFRESH=quiet
+    command: streamlit run show_mermaid.py --server.port=8510 --server.address=0.0.0.0 --server.runOnSave=true
