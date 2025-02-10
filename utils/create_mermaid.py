@@ -437,6 +437,19 @@ def download_buttons_layout(data_to_visualize):
             mime="text/html"
         )
 
+
+
+def generate_drawio_url() -> str:
+    """
+    Generates a draw.io URL that will open a new diagram with the Mermaid editor.
+
+    Returns:
+    -------
+    str
+        A URL that will open draw.io with Mermaid editor
+    """
+    return "https://app.diagrams.net/"
+
 def render_mermaid() -> None:
     """
     Renders the Mermaid diagram based on user input stored in session state.
@@ -461,8 +474,14 @@ def render_mermaid() -> None:
 
         download_buttons_layout(data_to_visualize)
           
+        # Add Mermaid Live Editor link
         link='**The link for flowchart rendering on**  [mermaid_live]({mermaid_live})'.format(mermaid_live=data_to_visualize.get('link'))
-        st.markdown(link, unsafe_allow_html=True) 
+        st.markdown(link, unsafe_allow_html=True)
+        
+        # Add draw.io link
+        drawio_url = generate_drawio_url()
+        st.markdown(f'**Open in** [draw.io Mermaid Editor]({drawio_url})')
+        st.markdown("")
 
         mermaid(data_to_visualize.get('code'))
 

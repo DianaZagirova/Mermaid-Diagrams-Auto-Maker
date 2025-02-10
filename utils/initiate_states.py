@@ -4,7 +4,7 @@ from pathlib import Path
 
 # Constants
 DEFAULT_EXAMPLE_TEXT_PATH = "./data/example_text.txt"
-DEV_MODE = "public" #"dev" / "public"
+DEV_MODE = "dev" #"dev" / "public"
 
 def load_example_text():
     """Load example text from file with proper error handling"""

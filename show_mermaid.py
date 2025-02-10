@@ -1,15 +1,17 @@
-import json
-
 import streamlit as st
+if "openai_api_key" not in st.session_state:
+        st.session_state.openai_api_key = ""
+        
+import json
 from langchain.schema import HumanMessage, SystemMessage, AIMessage
 from langchain.callbacks import get_openai_callback
 
-from llm.llm_utils import get_llm_response_model_specific
 from formatting.custom_styles import apply_custom_style
 from formatting.chat_interface import handle_userInput
 from utils.create_mermaid import get_mermaid_data, get_prompt, render_mermaid
 from utils.initiate_states import init_states
 from utils.general_utils import configure_assistant_prompt, check_and_rerun
+from llm.llm_utils import get_llm_response_model_specific
 
 
 # Constants
@@ -33,9 +35,10 @@ def initialize_app():
         '<div class="subheader">Input your document to generate an insightful diagram</div>',
         unsafe_allow_html=True
     )
-
+    
 
 initialize_app()
+
 
 # Main layout columns
 col_settings, col_text = st.columns([1, 3])
