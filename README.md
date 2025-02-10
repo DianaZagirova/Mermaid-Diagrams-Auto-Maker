@@ -2,6 +2,12 @@
 
 🤖 A user-friendly Streamlit application that automatically transforms text into Mermaid diagrams using LLM. Whether you need flowcharts, sequence diagrams, state diagrams, or other visualization types, this tool makes diagram creation intuitive and efficient. Chat on the resulted diagram and ask LLM to improve or modify it!
 
+## App Demo
+
+
+https://github.com/user-attachments/assets/f93a2fda-fbde-4e39-bc6b-6172d161dacf
+
+
 ## Features
 
 - **Multiple Diagram Types**: Create various types of Mermaid diagrams including:
